@@ -21,6 +21,15 @@ import type { AccountImportRoute as AddAccountRoute } from "./accounts/import/ty
 import { AccountImportFrame } from "./accounts/import/AccountImportFrame";
 import { SecretInput } from "./accounts/import/SecretInput";
 import { getAccountImportCopy } from "./accounts/import/copy";
+import { isOpenAiApiBaseUrl, OPENAI_API_BASE_URL } from "../utils/openaiApi";
+
+const initialApiForm = (): CreateApiAccountInput => ({
+  label: "OpenAI",
+  baseUrl: OPENAI_API_BASE_URL,
+  apiKey: "",
+  modelName: "gpt-5.6-sol",
+  forceSave: false,
+});
 
 type AddAccountDialogProps = {
   open: boolean;
@@ -72,13 +81,8 @@ export function AddAccountDialog({
   const [preparingOauth, setPreparingOauth] = useState(false);
   const [oauthLogin, setOauthLogin] = useState<PreparedOauthLogin | null>(null);
   const [oauthCallbackUrl, setOauthCallbackUrl] = useState("");
-  const [apiForm, setApiForm] = useState<CreateApiAccountInput>({
-    label: "",
-    baseUrl: "",
-    apiKey: "",
-    modelName: "",
-    forceSave: false,
-  });
+  const [apiForm, setApiForm] = useState<CreateApiAccountInput>(initialApiForm);
+  const officialApi = isOpenAiApiBaseUrl(apiForm.baseUrl);
   const [apiInlineError, setApiInlineError] = useState<string | null>(null);
   const [apiInlineSuccess, setApiInlineSuccess] = useState<string | null>(null);
   const [apiCanForceSave, setApiCanForceSave] = useState(false);
@@ -88,7 +92,7 @@ export function AddAccountDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
-  const busy = importingAccounts || readingFiles;
+  const busy = importingAccounts || readingFiles || testingApiConnection;
   const actionLocked = busy || preparingOauth;
   const closeBlocked = busy;
   const routeSwitchBlocked = busy || oauthWaitingForCallback;
@@ -115,13 +119,7 @@ export function AddAccountDialog({
       setSessionJsonText("");
       setReadingFiles(false);
       setPendingRoute(null);
-      setApiForm({
-        label: "",
-        baseUrl: "",
-        apiKey: "",
-        modelName: "",
-        forceSave: false,
-      });
+      setApiForm(initialApiForm());
       setApiInlineError(null);
       setApiInlineSuccess(null);
       setApiCanForceSave(false);
@@ -645,12 +643,39 @@ export function AddAccountDialog({
         <div className="addAccountPanelBody addApiSection">
           <div className="addApiFieldGrid">
             <label className="addOauthField">
+              <span className="addOauthFieldLabel">{copy.addAccount.apiProviderLabel}</span>
+              <select
+                className="addOauthInput"
+                aria-label={copy.addAccount.apiProviderLabel}
+                value={officialApi ? "openai" : "relay"}
+                disabled={actionLocked}
+                onChange={(event) => {
+                  const official = event.target.value === "openai";
+                  setApiForm((current) => ({
+                    ...current,
+                    label: official ? current.label || "OpenAI" : current.label === "OpenAI" ? "" : current.label,
+                    baseUrl: official ? OPENAI_API_BASE_URL : "",
+                    apiKey: "",
+                    forceSave: false,
+                  }));
+                  setApiInlineError(null);
+                  setApiInlineSuccess(null);
+                  setApiCanForceSave(false);
+                }}
+              >
+                <option value="openai">{copy.addAccount.apiOfficialProvider}</option>
+                <option value="relay">{copy.addAccount.apiRelayProvider}</option>
+              </select>
+              {officialApi ? <span className="addFieldHint">{copy.addAccount.apiOfficialHint}</span> : null}
+            </label>
+            <label className="addOauthField">
               <span className="addOauthFieldLabel">
                 {copy.addAccount.apiNameLabel}
               </span>
               <input
                 className="addOauthInput"
                 value={apiForm.label}
+                disabled={actionLocked}
                 onChange={handleApiFieldChange("label")}
                 placeholder={copy.addAccount.apiNamePlaceholder}
                 spellCheck={false}
@@ -664,6 +689,8 @@ export function AddAccountDialog({
               <input
                 className="addOauthInput"
                 value={apiForm.baseUrl}
+                aria-label={copy.addAccount.apiBaseUrlLabel}
+                disabled={actionLocked}
                 onChange={handleApiFieldChange("baseUrl")}
                 placeholder={copy.addAccount.apiBaseUrlPlaceholder}
                 spellCheck={false}
@@ -677,10 +704,11 @@ export function AddAccountDialog({
               <span className="addOauthFieldLabel">
                 {copy.addAccount.apiKeyLabel}
               </span>
-                    <SecretInput
-                      className="addOauthInput"
-                      aria-label={copy.addAccount.apiKeyLabel}
+              <SecretInput
+                className="addOauthInput"
+                aria-label={copy.addAccount.apiKeyLabel}
                 value={apiForm.apiKey}
+                disabled={actionLocked}
                 onChange={handleApiFieldChange("apiKey")}
                 placeholder={copy.addAccount.apiKeyPlaceholder}
                 spellCheck={false}
@@ -694,6 +722,7 @@ export function AddAccountDialog({
               <input
                 className="addOauthInput"
                 value={apiForm.modelName}
+                disabled={actionLocked}
                 onChange={handleApiFieldChange("modelName")}
                 placeholder={copy.addAccount.apiModelPlaceholder}
                 spellCheck={false}
@@ -702,19 +731,19 @@ export function AddAccountDialog({
           </div>
 
           {apiInlineError ? (
-            <div className="addApiErrorBox">
+            <div className="addApiErrorBox" role="alert">
               <strong>{copy.addAccount.apiValidationFailed}</strong>
               <p>{apiInlineError}</p>
             </div>
           ) : apiInlineSuccess ? (
-            <div className="addOauthStatus addApiStatus addApiSuccessBox">
+            <div className="addOauthStatus addApiStatus addApiSuccessBox" role="status">
               <strong>{copy.addAccount.apiTestSucceeded}</strong>
               <p>{apiInlineSuccess}</p>
             </div>
           ) : (
             <div className="addOauthStatus addApiStatus">
-              <strong>{copy.addAccount.apiValidationTitle}</strong>
-              <p>{copy.addAccount.apiValidationDescription}</p>
+              <strong>{officialApi ? copy.addAccount.apiOfficialValidationTitle : copy.addAccount.apiValidationTitle}</strong>
+              <p>{officialApi ? copy.addAccount.apiOfficialValidationDescription : copy.addAccount.apiValidationDescription}</p>
             </div>
           )}
 

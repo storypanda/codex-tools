@@ -11,6 +11,7 @@ export function AccountsView({
   c: CodexController;
 }) {
   const actions: AccountsGridProps = {
+    onBalanceUpdated: c.loadAccounts,
     accountOrder: c.settings.accountOrder,
     orderingAccounts: c.savingSettings,
     onMoveAccount: (account, direction) => void c.updateSettings({

@@ -1,3 +1,4 @@
+pub(crate) mod openai_balance;
 pub(crate) mod relay_edit;
 pub(crate) mod reset_credit;
 mod warmup;
@@ -206,6 +207,7 @@ pub(crate) async fn create_api_account_internal(
             api_key: Some(api_key),
             model_name: Some(model_name),
             balance_text,
+            api_balance_fetched_at: None,
             profile_auth_path: None,
             profile_config_path: None,
             profile_auth_ready: false,
@@ -1924,6 +1926,7 @@ fn upsert_prepared_import(
             api_key: None,
             model_name: None,
             balance_text: None,
+            api_balance_fetched_at: None,
             profile_auth_path: None,
             profile_config_path: None,
             profile_auth_ready: false,
@@ -1956,6 +1959,7 @@ fn upsert_prepared_import(
             api_key: None,
             model_name: None,
             balance_text: None,
+            api_balance_fetched_at: None,
             profile_auth_path: None,
             profile_config_path: None,
             profile_auth_ready: false,
@@ -1997,6 +2001,7 @@ fn apply_prepared_import_to_account(
     existing.api_key = None;
     existing.model_name = None;
     existing.balance_text = None;
+    existing.api_balance_fetched_at = None;
     existing.updated_at = now;
     existing.usage = usage;
     existing.usage_error = None;
@@ -2028,6 +2033,7 @@ fn apply_reauthorized_account(existing: &mut StoredAccount, prepared: PreparedIm
     existing.api_key = None;
     existing.model_name = None;
     existing.balance_text = None;
+    existing.api_balance_fetched_at = None;
     existing.updated_at = now;
     existing.usage = usage;
     existing.usage_error = None;
@@ -2508,6 +2514,7 @@ mod tests {
             api_key: None,
             model_name: None,
             balance_text: None,
+            api_balance_fetched_at: None,
             profile_auth_path: None,
             profile_config_path: None,
             profile_auth_ready: false,
@@ -2548,6 +2555,7 @@ mod tests {
                 api_key: None,
                 model_name: None,
                 balance_text: None,
+                api_balance_fetched_at: None,
                 profile_auth_path: None,
                 profile_config_path: None,
                 profile_auth_ready: true,
@@ -2632,6 +2640,7 @@ mod tests {
             api_key: None,
             model_name: None,
             balance_text: None,
+            api_balance_fetched_at: None,
             profile_auth_path: None,
             profile_config_path: None,
             profile_auth_ready: false,
@@ -2905,6 +2914,7 @@ mod tests {
             api_key: None,
             model_name: None,
             balance_text: None,
+            api_balance_fetched_at: None,
             profile_auth_path: None,
             profile_config_path: None,
             profile_auth_ready: false,

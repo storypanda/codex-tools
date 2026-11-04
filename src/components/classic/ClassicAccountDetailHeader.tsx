@@ -3,6 +3,7 @@ import { accountIssueReason, accountStatus } from "../accounts/accountModel";
 import { statusLabel } from "../accounts/accountCopy";
 import { ActionIcon } from "./ClassicIcons";
 import type { ClassicAccountsWorkspace } from "./useClassicAccounts";
+import { isOpenAiApiAccount } from "../../utils/openaiApi";
 
 export function ClassicAccountDetailHeader({
   workspace,
@@ -64,7 +65,7 @@ export function ClassicAccountDetailHeader({
           )}
           <div className="detailPlanStatus">
             <span className={`planChip tone-${planTone(plan)} isStatic`}>
-              {formatPlan(plan, copy.accountCard.planLabels)}
+              {isOpenAiApiAccount(account) ? copy.addAccount.apiOfficialProvider : formatPlan(plan, copy.accountCard.planLabels)}
             </span>
             <span
               className={`statusText status-${status}`}

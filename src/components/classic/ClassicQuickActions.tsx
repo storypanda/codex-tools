@@ -35,13 +35,14 @@ export function ClassicQuickActions({
             <span>{copy.addAccount.apiEditTitle}</span>
           </button>
         ) : null}
-        <button
+        {selectedRow.account.sourceKind !== "relay" ? <button
           type="button"
+          disabled={authBusy}
           onClick={() => onReauthorize(selectedRow.account)}
         >
           <ActionIcon type="login" />
           <span>{text.reauthorize}</span>
-        </button>
+        </button> : null}
         {selectedRow.account.sourceKind !== "relay" ? (
           <button
             type="button"

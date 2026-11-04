@@ -315,6 +315,8 @@ pub(crate) fn restore_codex_proxy_binding() -> Result<CodexProxyBindingState, St
     codex_proxy_binding_state(None)
 }
 
+pub(crate) mod official_api;
+
 pub(crate) fn build_api_auth_json(api_key: &str) -> Value {
     serde_json::json!({
         "OPENAI_API_KEY": api_key,
@@ -362,6 +364,9 @@ pub(crate) fn normalize_relay_base_url(base_url: &str) -> Result<String, String>
     if !(trimmed.starts_with("https://") || trimmed.starts_with("http://")) {
         return Err("Base URL 仅支持 http/https 地址。".to_string());
     }
+    if official_api::is_official_base_url(trimmed) {
+        return Ok(official_api::BASE_URL.to_string());
+    }
     Ok(trimmed.to_string())
 }
 
@@ -373,8 +378,14 @@ pub(crate) async fn validate_relay_target(
     let endpoint = format!("{}/responses", base_url.trim_end_matches('/'));
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(VALIDATE_TIMEOUT_SECS))
+        .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|error| format!("创建 API 检测客户端失败: {error}"))?;
+
+    if official_api::is_official_base_url(base_url) {
+        return official_api::validate_key(&client, official_api::BASE_URL, api_key, model_name)
+            .await;
+    }
 
     let payload = serde_json::json!({
         "model": model_name,

@@ -70,6 +70,7 @@ export type UiCopy = {
 };
 
 export type AccountsGridProps = {
+  onBalanceUpdated?: () => Promise<unknown>;
   resettingAccountId?: string | null;
   onUseResetCredit?: (account: AccountSummary, creditId: string) => Promise<boolean>;
   accountOrder?: string[];

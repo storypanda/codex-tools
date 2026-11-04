@@ -10,6 +10,7 @@ import { UsageMeter } from "./ClassicUsageMeter";
 import { ClassicAccountStats } from "./ClassicAccountStats";
 import { copyAccountText } from "./copyAccountText";
 import type { ClassicAccountsWorkspace } from "./useClassicAccounts";
+import { isOpenAiApiAccount } from "../../utils/openaiApi";
 export function ClassicAccountRow({
   workspace,
   row,
@@ -63,7 +64,7 @@ export function ClassicAccountRow({
         <span className="accountIdentityText">
           <span className="accountTitleLine">
             {row.variants.map((variant) => {
-              const plan = formatPlan(
+              const plan = isOpenAiApiAccount(variant) ? copy.addAccount.apiOfficialProvider : formatPlan(
                 variant.planType || variant.usage?.planType,
                 copy.accountCard.planLabels,
               );

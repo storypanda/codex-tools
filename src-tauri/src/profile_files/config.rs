@@ -28,6 +28,13 @@ pub(super) fn build_relay_profile_config(
 ) -> String {
     let mut document = parse_config_or_default(current_config);
     codex_catalog::remove_managed_catalog(&mut document);
+    if official_api::is_official_base_url(base_url) {
+        document.remove("openai_base_url");
+        document["model_provider"] = value("openai");
+        document["model"] = value(model_name);
+        document["cli_auth_credentials_store"] = value(MANAGED_AUTH_CREDENTIALS_STORE);
+        return document.to_string();
+    }
     document["openai_base_url"] = value(base_url);
     document["model"] = value(model_name);
     configure_relay_provider(&mut document, base_url);
@@ -109,18 +116,41 @@ pub(crate) fn current_config_matches_account(account: &StoredAccount) -> bool {
                 .and_then(toml_edit::Item::as_str)
                 == Some(MANAGED_AUTH_CREDENTIALS_STORE)
                 && (!matches!(account.source_kind, AccountSourceKind::Relay)
-                    || (config
-                        .get("openai_base_url")
-                        .and_then(toml_edit::Item::as_str)
-                        == account.api_base_url.as_deref()
-                        && config.get("model").and_then(toml_edit::Item::as_str)
-                            == account.model_name.as_deref()
-                        && config
-                            .get("model_provider")
-                            .and_then(toml_edit::Item::as_str)
-                            == Some(RELAY_PROVIDER)
-                        && relay_definition_matches(&config, account.api_base_url.as_deref())))
+                    || api_route_matches(
+                        &config,
+                        account.api_base_url.as_deref(),
+                        account.model_name.as_deref(),
+                    ))
         })
+}
+
+fn api_route_matches(
+    config: &DocumentMut,
+    base_url: Option<&str>,
+    model_name: Option<&str>,
+) -> bool {
+    if base_url.is_some_and(official_api::is_official_base_url) {
+        return official_definition_matches(config, model_name);
+    }
+    config
+        .get("openai_base_url")
+        .and_then(toml_edit::Item::as_str)
+        == base_url
+        && config.get("model").and_then(toml_edit::Item::as_str) == model_name
+        && config
+            .get("model_provider")
+            .and_then(toml_edit::Item::as_str)
+            == Some(RELAY_PROVIDER)
+        && relay_definition_matches(config, base_url)
+}
+
+fn official_definition_matches(config: &DocumentMut, model_name: Option<&str>) -> bool {
+    config
+        .get("model_provider")
+        .and_then(toml_edit::Item::as_str)
+        == Some("openai")
+        && config.get("model").and_then(toml_edit::Item::as_str) == model_name
+        && config.get("openai_base_url").is_none()
 }
 
 fn relay_definition_matches(config: &DocumentMut, base_url: Option<&str>) -> bool {
@@ -145,6 +175,32 @@ fn relay_definition_matches(config: &DocumentMut, base_url: Option<&str>) -> boo
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn official_key_uses_the_builtin_provider_and_preserves_shared_settings() {
+        let config = build_relay_profile_config(
+            Some("openai_base_url = \"https://relay.invalid/v1\"\nmodel_provider = \"codex_tools_relay\"\nmodel_reasoning_effort = \"high\"\n"),
+            official_api::BASE_URL,
+            "test-model",
+        ).parse::<DocumentMut>().unwrap();
+        assert!(official_definition_matches(&config, Some("test-model")));
+        assert!(api_route_matches(
+            &config,
+            Some(official_api::BASE_URL),
+            Some("test-model")
+        ));
+        let legacy = "openai_base_url = \"https://api.openai.com/v1\"\nmodel = \"test-model\"\nmodel_provider = \"codex_tools_relay\"\n".parse::<DocumentMut>().unwrap();
+        assert!(!api_route_matches(
+            &legacy,
+            Some(official_api::BASE_URL),
+            Some("test-model")
+        ));
+        assert_eq!(config["model_reasoning_effort"].as_str(), Some("high"));
+        assert_eq!(
+            config["cli_auth_credentials_store"].as_str(),
+            Some(MANAGED_AUTH_CREDENTIALS_STORE)
+        );
+    }
+
     #[test]
     fn relay_uses_http_provider_and_retains_legacy_session_route() {
         let config = build_relay_profile_config(

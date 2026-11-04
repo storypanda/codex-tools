@@ -180,6 +180,7 @@ export type AccountSummary = {
   apiBaseUrl: string | null;
   modelName: string | null;
   balanceText: string | null;
+  apiBalanceFetchedAt?: number | null;
   profileAuthReady: boolean;
   profileConfigReady: boolean;
   profileIntegrityError: string | null;

@@ -1634,6 +1634,7 @@ mod tests {
             api_base_url: None,
             model_name: None,
             balance_text: None,
+            api_balance_fetched_at: None,
             profile_auth_ready: false,
             profile_config_ready: false,
             profile_integrity_error: None,

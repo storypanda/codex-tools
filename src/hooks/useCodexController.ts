@@ -3116,6 +3116,7 @@ export function useCodexController(
 
   return {
     accounts: sortedAccounts,
+    loadAccounts,
     apiAccountEditor,
     tokenUsage,
     tokenUsageError,

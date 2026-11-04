@@ -8,6 +8,8 @@ import {
 import type { AppSettings } from "../../src/types/app";
 import type { ApiAccountEdit } from "../../src/hooks/useApiAccountEditor";
 import { version } from "../../package.json";
+import { isOpenAiApiBaseUrl, OPENAI_API_BASE_URL } from "../../src/utils/openaiApi";
+import type { CreateApiAccountInput } from "../../src/types/app";
 
 export function installPreviewBackend() {
   const params = new URLSearchParams(location.search);
@@ -25,6 +27,12 @@ export function installPreviewBackend() {
     }));
   }
   if (params.get("scenario") === "empty") accounts = [];
+  if (params.get("scenario") === "openai") {
+    accounts = [{ ...accounts[0], id: "openai-preview", accountKey: "relay|openai-preview",
+      accountId: "relay:openai-preview", label: "OpenAI", sourceKind: "relay", email: null,
+      apiBaseUrl: OPENAI_API_BASE_URL, modelName: "gpt-5.6-sol", usage: null, planType: null,
+      balanceText: null, apiBalanceFetchedAt: null }];
+  }
   if (params.get("scenario") === "no-active")
     accounts.forEach((a) => {
       a.isCurrent = false;
@@ -123,6 +131,8 @@ export function installPreviewBackend() {
             a.label = input.label;
             a.apiBaseUrl = input.baseUrl;
             a.modelName = input.modelName;
+            a.balanceText = null;
+            a.apiBalanceFetchedAt = null;
           }
         });
         return null;
@@ -168,8 +178,30 @@ export function installPreviewBackend() {
           authUrl: "https://example.com/preview-oauth",
           redirectUri: "http://localhost:1455/auth/callback",
         };
+      if (command === "cancel_oauth_login" || command === "open_external_url") return null;
+      if (command === "create_api_account") {
+        const input = payload?.input as CreateApiAccountInput;
+        const id = `api-preview-${accounts.length}`;
+        const account = { ...structuredClone(fixtures[0]), id, label: input.label, sourceKind: "relay" as const,
+          accountKey: `relay|${id}`, accountId: `relay:${id}`, email: null, planType: null, usage: null,
+          apiBaseUrl: input.baseUrl, modelName: input.modelName, balanceText: null, apiBalanceFetchedAt: null,
+          isCurrent: false };
+        accounts.push(account);
+        return structuredClone(account);
+      }
+      if (command === "query_openai_balance") {
+        const input = payload?.input as { session: string; organizationId: string | null };
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        if (input.session === "sess-expired") throw new Error("Platform Session 已过期或无效，请重新导入。");
+        if (!input.session.includes("sess-")) throw new Error("请导入 OpenAI Platform 的 Session Key（sess- 开头）。");
+        const account = accounts.find((account) => account.id === payload?.id);
+        if (!account || !isOpenAiApiBaseUrl(account.apiBaseUrl)) throw new Error("Official account required");
+        account.balanceText = input.session === "sess-zero" ? "$0.00" : "$42.50";
+        account.apiBalanceFetchedAt = Math.floor(Date.now() / 1000);
+        return structuredClone(account);
+      }
       if (command === "test_api_account_connection")
-        return { ok: true, balanceText: "$128.40", message: "Preview" };
+        return { ok: true, balanceText: isOpenAiApiBaseUrl((payload?.input as { baseUrl: string }).baseUrl) ? null : "$128.40", message: "Preview" };
       if (command.startsWith("plugin:")) return null;
       throw new Error(`Preview has no handler for ${command}`);
     },

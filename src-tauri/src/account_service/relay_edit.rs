@@ -68,6 +68,7 @@ fn update_relay_fields(
     account.api_key = Some(api_key);
     account.updated_at = now_unix_seconds();
     account.balance_text = None;
+    account.api_balance_fetched_at = None;
     account.profile_last_validated_at = None;
     account.profile_last_validation_error = None;
     account.usage_error = None;

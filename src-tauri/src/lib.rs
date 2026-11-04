@@ -732,6 +732,17 @@ async fn update_account_label(
 }
 
 #[tauri::command]
+async fn query_openai_balance(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    input: account_service::openai_balance::QueryOpenAiBalanceInput,
+) -> Result<AccountSummary, String> {
+    account_service::openai_balance::query_openai_balance_internal(&app, state.inner(), &id, input)
+        .await
+}
+
+#[tauri::command]
 async fn update_account_api_proxy_enabled(
     app: AppHandle,
     state: State<'_, AppState>,
@@ -1508,6 +1519,7 @@ mod tests {
             api_key: None,
             model_name: None,
             balance_text: None,
+            api_balance_fetched_at: None,
             profile_auth_path: None,
             profile_config_path: None,
             profile_auth_ready: false,
@@ -3022,6 +3034,7 @@ pub fn run() {
             export_accounts_zip,
             delete_account,
             update_account_label,
+            query_openai_balance,
             update_account_api_proxy_enabled,
             refresh_all_usage,
             warmup_account,

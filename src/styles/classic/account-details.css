@@ -126,6 +126,48 @@
   font: 850 0.9rem/1.15 var(--font-ui);
 }
 
+.openAiBalanceActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.openAiBalanceCard, .openAiBalanceDialog form {
+  display: grid;
+  gap: 12px;
+}
+
+.openAiBalanceAmount {
+  font-variant-numeric: tabular-nums;
+}
+
+.openAiBalanceDialog .addOauthInput {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.openAiBalanceDialog .secretInput input {
+  padding-right: 64px;
+}
+
+.openAiBalanceDialog .secretVisibilityButton {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-height: 32px;
+  padding: 2px 8px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  color: var(--ink);
+}
+
+.openAiBalanceFileName, .openAiBalanceError {
+  overflow-wrap: anywhere;
+}
+
 .detailCardTitle {
   min-width: 0;
   display: flex;

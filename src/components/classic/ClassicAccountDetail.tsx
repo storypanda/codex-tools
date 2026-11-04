@@ -7,6 +7,8 @@ import { AccountOrderControls } from "../accounts/AccountOrderControls";
 import { ResetCreditsSection } from "../accounts/ResetCreditsSection";
 import { UsageMeter } from "./ClassicUsageMeter";
 import { ClassicAccountTokenCard } from "./ClassicAccountTokenCard";
+import { OpenAiBalancePanel } from "../accounts/OpenAiBalancePanel";
+import { isOpenAiApiAccount } from "../../utils/openaiApi";
 import type { ClassicAccountsWorkspace } from "./useClassicAccounts";
 export function ClassicAccountDetail({
   workspace,
@@ -63,6 +65,10 @@ export function ClassicAccountDetail({
             />
           </section>
 
+          {isOpenAiApiAccount(selectedRow.account) ? (
+            <OpenAiBalancePanel key={selectedRow.account.id} account={selectedRow.account}
+              busy={authBusy} onUpdated={workspace.actions.onBalanceUpdated} />
+          ) : null}
           <ClassicAccountTokenCard
             account={selectedRow.account}
             usage={tokenUsageByAccount.get(selectedRow.account.accountId)}

@@ -47,12 +47,12 @@ export function AccountActionMenu({
           action: () => actions.onEditApiAccount(account),
         }]
       : []),
-    {
+    ...(account.sourceKind !== "relay" ? [{
       label: text.reauthorize,
       icon: "login",
       disabled: actions.authBusy,
       action: () => actions.onReauthorize(account),
-    },
+    } as const] : []),
     ...(account.sourceKind !== "relay"
       ? [
           {

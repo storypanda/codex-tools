@@ -18,6 +18,7 @@ export function SecretInput(
       <button
         type="button"
         className="secretVisibilityButton"
+        disabled={props.disabled}
         onClick={() => setVisible(!visible)}
         aria-label={visible ? text.hideKey : text.showKey}
         aria-pressed={visible}
