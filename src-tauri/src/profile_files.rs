@@ -2,6 +2,8 @@
 mod codex_catalog;
 #[path = "profile_files/config.rs"]
 mod config;
+#[path = "profile_files/official_api.rs"]
+pub(crate) mod official_api;
 pub(crate) use codex_catalog::{bound_proxy_key, sync_proxy_catalog};
 pub(crate) use config::current_config_matches_account;
 use config::{
@@ -314,8 +316,6 @@ pub(crate) fn restore_codex_proxy_binding() -> Result<CodexProxyBindingState, St
     cleanup_codex_proxy_backup();
     codex_proxy_binding_state(None)
 }
-
-pub(crate) mod official_api;
 
 pub(crate) fn build_api_auth_json(api_key: &str) -> Value {
     serde_json::json!({

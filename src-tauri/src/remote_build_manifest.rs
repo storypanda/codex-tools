@@ -8,6 +8,7 @@ pub(crate) const PROXYD_BUILD_SOURCE_FILES: &[&str] = &[
     "src/models.rs",
     "src/profile_files.rs",
     "src/profile_files/config.rs",
+    "src/profile_files/official_api.rs",
     "src/profile_files/codex_catalog.rs",
     "src/profile_files/codex_catalog_tests.rs",
     "src/proxy_daemon.rs",
